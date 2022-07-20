@@ -1,0 +1,271 @@
+---
+title: "Dunsin's Dashboard"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: rows
+    vertical_layout: fill
+    social: [ "twitter", "facebook", "menu"]
+    source_code: embed
+---
+
+```{r setup, include=FALSE}
+library(flexdashboard)
+library(knitr)
+library(DT)
+library(rpivotTable)
+library(ggplot2)
+library(plotly)
+library(dplyr)
+library(openintro)
+library(highcharter)
+library(ggvis)
+library(highcharter)
+library(viridisLite)
+library(forecast)
+library(treemap)
+options(knitr.duplicate.label = "allow")
+```
+
+
+```{r}
+data <- read.csv("~/Desktop/ChurnHVC.csv")
+```
+
+```{r}
+mycolors <- c("blue", "#FFC125", "darkgreen", "darkorange")
+```
+
+Interactive Data Visualization
+=====================================
+
+Row
+-------------------------------------
+
+### Car Failure Analysis
+
+```{r}
+valueBox(paste("Churned"),
+         color = "danger")
+```
+
+### Car Failures in US
+
+```{r}
+valueBox(length(data$Customer.ID),
+         icon = "fa-user")
+```
+
+### **Labor Cost**
+
+```{r}
+gauge(round(mean(data$Total.Revenue),
+            digits = 6),
+            min = 7999,
+            max = 12000,
+            gaugeSectors(success = c(10000, 12000),
+                         warning = c(8000, 9999),
+                         danger = c(0, 7999),
+                         colors = c("green", "yellow", "red")))
+```
+
+### Massachusetts
+
+```{r}
+valueBox(sum(data$City == "Los Angeles"),
+         icon = 'fa-user')
+```
+
+### California
+
+```{r}
+valueBox(sum(data$City == "San Diego"),
+         icon = 'fa-user')
+```
+
+### Texas
+
+```{r}
+valueBox(sum(data$City == "San Francisco"),
+         icon = 'fa-user')
+```
+
+### Florida
+
+```{r}
+valueBox(sum(data$City == "Sacramento"),
+         icon = 'fa-user')
+```
+
+Row
+-------------------------------
+
+### Failures By State
+
+```{r}
+p1 <- data %>%
+         group_by(City) %>%
+         summarise(Customer.ID = n()) %>%
+         plot_ly(x = ~City,
+                 y = ~Customer.ID,
+                 color = "blue",
+                 type = 'bar') %>%
+layout(xaxis = list(title = "HVCs by City"),
+yaxis = list(title = 'Customer.ID'))
+p1
+```
+
+### Top States
+
+```{r}
+p2 <- data %>%
+         group_by(Customer.Status) %>%
+         summarise(City = n()) %>%
+         filter(City>5) %>%
+         plot_ly(labels = ~Customer.Status,
+                 values = ~City,
+                 marker = list(colors = mycolors)) %>%
+         add_pie(hole = 0.1) %>%
+         layout(xaxis = list(zeroline = F,
+                             showline = F,
+                             showticklabels = F,
+                             showgrid = F),
+                yaxis = list(zeroline = F,
+                             showline = F,
+                             showticklabels=F,
+                             showgrid=F))
+p2
+```
+
+### FM Vs Mileage
+
+```{r}
+p3 <- plot_ly(data,
+              x = ~City,
+              y = ~Total.Revenue,
+              text = paste("City:", data$City,
+                           "Total.Revenue:",
+                           data$Total.Revenue),
+              type = "bar") %>%
+         layout(xaxis = list(title="City"),
+                yaxis = list(title = "Total.Revenue"))
+p3
+```
+
+Row
+------------------------------------
+### Scatter Plot of Month Vs Mileage
+
+```{r}
+p4 <- plot_ly(data, x=~Total.Revenue) %>%
+         add_markers(y = ~Total.Charges,
+                     text = ~paste("Total.Charges: ", Total.Charges),
+                     showlegend = F) %>%
+         add_lines(y = ~fitted(loess(Total.Charges ~ Total.Revenue)),
+                   name = "Loess Smoother",
+                   color = I("#FFC125"),
+                   showlegend = T,
+                   line = list(width=5)) %>%
+         layout(xaxis = list(title = "Total.Revenue"),
+                yaxis = list(title = "Total.Charges"))
+p4
+```
+
+### Box Plot of Top State
+
+```{r}
+data %>%
+         group_by(City) %>%
+         ggvis(~City, ~Total.Revenue, fill = ~City) %>%
+         layer_boxplots()
+```
+
+
+Map
+========================================
+
+### Map
+
+```{r}
+car <- data %>%
+         group_by(City) %>%
+         summarize(Customer.ID = n())
+car$City <- abbr2state(car$City)
+
+highchart() %>%
+         hc_title(text = "California HVCs") %>%
+         hc_subtitle(text = "Source: ChurnHVC.csv") %>%
+         hc_add_series_map(usgeojson, car,
+                           name = "City",
+                           value = "Customer.ID",
+                           joinBy = c("woename", "City")) %>%
+         hc_mapNavigation(enabled = T)
+```
+
+Data Table
+========================================
+
+```{r}
+datatable(data,
+          caption = "High Value Customers",
+          rownames = T,
+          filter = "top",
+          options = list(pageLength = 25))
+```
+
+Pivot Table
+=========================================
+
+```{r}
+rpivotTable(data,
+            aggregatorName = "Customer.ID",
+            cols= "Gender",
+            rows = "City",
+            rendererName = "Heatmap")
+```
+
+Summary {data-orientation=columns} 
+===========================================
+
+Column 
+-----------------------------------
+
+### Max Failure Month
+
+```{r}
+valueBox(max(data$Total.Revenue),
+         icon = "fa-user" )
+```
+
+### Average Labor cost
+```{r}
+valueBox(round(mean(data$Total.Revenue),
+               digits = 2),
+         icon = "fa-area-chart")
+```
+
+### Average Mileage at Failure
+
+```{r}
+valueBox(round(mean(data$Monthly.Charge), digits = 2),
+         icon = "fa-area-chart")
+```
+
+Column
+---------------------------
+
+Report
+
+* This is a report on `r length(data$Customer.ID)` high value customers.
+
+* The average revenue was `r mean(data$Total.Revenue)`.
+
+* The average monthly charge was `r mean(data$Monthly.Charge)`.
+
+This report was generated on `r format(Sys.Date(), format = "%B %d, %Y")`.
+
+About Report
+========================================
+
+Created by: Oluwadunsin Agbolabori
+
+Confidential: HIGHLY!
