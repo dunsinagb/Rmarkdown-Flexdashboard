@@ -2,11 +2,11 @@
 
 https://rpubs.com/Dunsinagb/925603
 
-Introduction
+## **Introduction**
 
 This code through looks into ways to make it simple to create interactive dashboards for R by combining R Markdown and flexdashboard
 
-**Content Overview**
+## **Content Overview**
 
  A dashboard combines data and visualizations which helps in decision making. In this tutorial, we will generate a dashboard using R Markdown.  Our focus will be on the following,
 
