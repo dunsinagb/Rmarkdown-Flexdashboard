@@ -1,6 +1,6 @@
 # CodeThrough - Creating an Interactive Dashboard with R markdown/flexdashboard
 
-https://rpubs.com/Dunsinagb/92581
+https://rpubs.com/Dunsinagb/925603
 
 Introduction
 
@@ -38,4 +38,4 @@ You can write narrative text outside of an R code "chunk." You can italicize tex
 
 Example: Rmarkdown code to create an interactive dashboard for a fictitious telecom company cab be seen in link 
 
-https://rpubs.com/Dunsinagb/92581
+https://rpubs.com/Dunsinagb/925603
